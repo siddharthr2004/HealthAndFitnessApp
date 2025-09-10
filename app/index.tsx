@@ -1,31 +1,23 @@
-import { Text, View,  StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
+import { Canvas, Path } from '@shopify/react-native-skia';
+import React from 'react';
+import { Dimensions, View } from 'react-native';
 
-export default function Index() {
+export default function SkiaTest() {
+  const { width, height} = Dimensions.get('window');
+  const canvasSize = 300;
+  ;
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Home screen</Text>
-      <Link href="/about" style={styles.button}>
-        Go to About screen
-      </Link>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1ead5eff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: '#b92121ff',
-  },
-  button: {
-    fontSize: 20,
-    textDecorationLine: 'underline',
-    color: '#ffff'
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Canvas style={{ width: 250, height: 400, borderWidth: 2, borderColor: 'red', transform: [{translateY: -200}, {translateX: 70}]}}>
+          <Path
+            path="M 120 120 L 180 120 L 180 180 L 120 180 Z"
+            color="#8ED6FF"
+            style="fill"
+            strokeWidth={2}
+          />
+        </Canvas>
+      </View>
+    );
   }
-});
 
