@@ -37,3 +37,9 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+#ios module
+ios/
+
+#key storage
+keys.env
