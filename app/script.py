@@ -1,8 +1,7 @@
-#This script will be used to both connect to port 5001, Store info into a database, collect info from
+#This script will connect to port 5001, Store info into a database, collect info from
 #the database, compare info from the day to both 1) expected values and 2) how well you've done compared
-#to the rest of the week and will calculate the diff here
-
-from flask import Flask, request
+#to the rest of the week. This will be calculated, AI info will be sent back on weekly basis
+from flask import Flask, request, jsonify
 import sqlite3
 import copy
 from transformers import pipeline
@@ -40,46 +39,55 @@ cursor.execute('''
         FOREIGN KEY (username) REFERENCES userInfo(username)
     )''')
 conn.commit()
-#commented out for now
-#app = Flask(__name__)
-#comment back in 
+app = Flask(__name__)
 
-#@app.route('/register', methods=['POST'])
-def handleRegistration(data):
-    #commented out for now
-    #data = request.json
+@app.route('/register', methods=['POST'])
+def handleRegistration():
+    #Hangle the sqlite connection now
+    conn = sqlite3.connect('userData.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    data = request.get_json()
     username = data["username"]
     password = data["password"]
     cursor.execute("SELECT * FROM userInfo WHERE username = ?", [username])
     row = cursor.fetchone()
     if (row):
-        return 0
+        return jsonify({"result": 0})
     cursor.execute('INSERT INTO userInfo (username, password) VALUES (?, ?)', [username, password])
     conn.commit()
-    return 1
+    conn.close()
+    return jsonify({"result": 1})
 
-#@app.route('/loginInfo', methods=['POST'])
-#Added in argument to check capability of handling
-def handle_Login(data):
-    #commented out for now
-    #data = request.json
+@app.route('/loginInfo', methods=['POST'])
+def handle_Login():
+    #Handle the sqlite connection now
+    conn = sqlite3.connect('userData.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    data = request.get_json()
+    #test to print values out 
+    print(data)
     username = data["username"]
     password = data["password"]
     cursor.execute('SELECT * FROM userInfo WHERE username = ?', [username])
     row = cursor.fetchone()
     if not row or row["password"] != password:
-        return 0
+        return jsonify({"result": 0}) 
     else:
-        return 1
+        return jsonify({"result": 1})
 
 #comment back in 
-#@app.route('/firstInfo', methods=['POST'])
+@app.route('/firstInfo', methods=['POST'])
 #Added in argument to check capability of handling
-def handle_post(data):
+def handle_post():
     #commented out for now
-    #data = request.json
+    conn = sqlite3.connect('userData.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    data = request.get_json()
     username = data["username"]
-    calsPerDay = data["calsTotal"]
+    calsPerDay = int(data["calsEaten"]) - int(data["calsBurned"])
     socialMeidaHours = data["socialMediaHrs"]
     waterDrank = data["waterDrank"]
     hrsProductive = data["hrsProductive"]
@@ -91,23 +99,26 @@ def handle_post(data):
                        WHERE username = ?''', 
             [calsPerDay, socialMeidaHours, waterDrank, hrsProductive, username])
         conn.commit()
-        return 1
+        return jsonify({"result": 1})
     else:
-        return 0
+        return jsonify({"result": 0})
 
 #comment back in 
-#@app.route('/dailyInfo', methods=['POST'])
-#Added in argument to check capability of handling
-def handleDailyPost(data):
-    #var initalization
-    #commented out for now
-    #data = request.json
+@app.route('/dailyInfo', methods=['POST'])
+def handleDailyPost():
+    conn = sqlite3.connect('userData.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    data = request.get_json()
+    #Test to see where data is pulled
+    print("THIS IS THE INPUTTED INFORMATION", data)
+    #test end
     username = data["username"]
     dailyData = {
-        "calsIntaked": data["calsEaten"] - data["calsBurned"],
-        "socialMediaHours": data["socialMediaHrs"],
-        "waterDrank": data["waterDrank"],
-        "hrsProductive": data["hrsProductive"]
+        "calsIntaked": int(data["caloriesEaten"]) - int(data["caloriesBurned"]),
+        "socialMediaHours": int(data["socialMediaHours"]),
+        "waterDrank": int(data["waterConsumed"]),
+        "hrsProductive": int(data["hoursProductive"])
     }
     weeklyData = copy.deepcopy(dailyData)
     dailyToNormalThrottle = {
@@ -141,24 +152,38 @@ def handleDailyPost(data):
     #Calculate changes and populate dicts
     def handleDifferences(actual, expected, toNormalDifferences):
         percentDiff = lambda actual, expected: (abs(actual-expected) / expected) * 100
+        #TEST for printing out both vals
+        print("this is the actual ", actual)
+        print("this is the expected ", expected)
+        #end TEST
         for i in range(0, len(actual)):
             #this is for the calculations within the calories intakes and social media hours, where the  less, the better
             if (i<2):
-                if actual[i] < expected[i]:
-                    difference = percentDiff(actual[i], expected[i])
-                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] += difference
-                else:
+                #In the case where actual[i] is 0
+                if actual[i] == 0:
+                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] -= 100
+                elif expected[i] == 0:
+                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] += 100
+                elif actual[i] < expected[i]:
                     difference = percentDiff(actual[i], expected[i])
                     toNormalDifferences[(list(toNormalDifferences.keys())[0])] -= difference
+                else:
+                    difference = percentDiff(actual[i], expected[i])
+                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] += difference
                     toNormalDifferences[(list(toNormalDifferences.keys())[i+1])] += difference
             #This is for the calculations within the water drank and hours productive where the more, the better
             else:
-                if actual[i] > expected[i]:
-                    difference = percentDiff(actual[i], expected[i])
+                #In the case where actual[i] is 0
+                if actual[i] == 0:
+                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] -= 100
+                elif expected[i] == 0:
+                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] += 100
+                elif actual[i] > expected[i]:
+                    difference = percentDiff(actual[i], expected[i])  
                     toNormalDifferences[(list(toNormalDifferences.keys())[0])] += difference
                 else:
                     difference = percentDiff(actual[i], expected[i])
-                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] -= difference
+                    toNormalDifferences[(list(toNormalDifferences.keys())[0])] += difference
                     toNormalDifferences[(list(toNormalDifferences.keys())[i+1])] += difference
         toNormalDifferences[(list(toNormalDifferences.keys())[0])] /= 4
         return toNormalDifferences
@@ -183,8 +208,8 @@ def handleDailyPost(data):
     cursor.execute('SELECT * FROM dailyInfo WHERE username = ? ORDER BY id DESC LIMIT 1', [username])
     row = cursor.fetchone()
     if (row):
-        #Commenting this down to 0, replace bace to 7 when done with testing
-        if (row["id"] >= 0): # and row["id"]%7 == 0):
+        #Only enter in the weekly informtion if there are 7 instances (where it is order by descending value)
+        if (row["id"] >= 0) and (row["id"]%7 == 0):
             cursor.execute('SELECT * FROM dailyInfo WHERE id > ? AND id < ? AND username = ?', 
                             [row["id"]-7, row["id"], username])
             rows = cursor.fetchall()
@@ -225,34 +250,9 @@ def handleDailyPost(data):
                 input=prompt
             )
             outputs["weeklyInfo"] += response.output_text
-    return outputs
+    print(outputs["dailyInfo"])
+    return jsonify({"result": outputs})
 
-if __name__ == '__main__':
-    
-    registrationData = {
-        "username": "Luke",
-        "password": "12345"
-    }
-    firstTimData = {
-        "username": "Luke",
-        "calsTotal": 2100,
-        "socialMediaHrs": 3,
-        "waterDrank": 8,
-        "hrsProductive": 7
-    }
-    dailyData = {
-        "username": "Luke",
-        "calsEaten": 40000, 
-        "calsBurned": 80,
-        "socialMediaHrs": 9,
-        "waterDrank": 3,
-        "hrsProductive": 5
-    }
-    val3 = handleDailyPost(dailyData)
-    print("THIS IS THE DAILY INFO")
-    print(val3["dailyInfo"])
-    print("THIS IS THE WEEKLY INFO")
-    print(val3["weeklyInfo"])
-    #app.run(host='0.0.0.0', port=5001)
+app.run(host='0.0.0.0', port=5001)
 
 

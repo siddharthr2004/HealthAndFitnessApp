@@ -1,0 +1,7 @@
+NOTES FOR STARTING SERVER:
+1.To start up the virtual enviroment, use "npm expo start"
+2. use source venv/bin/activate to activate virtual py env 
+3. use "pip list" to list all python dependencies 
+
+TODO tasks: 
+1. make sure that the firstInfo values CANNOT be 0
