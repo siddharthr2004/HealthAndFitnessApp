@@ -44,10 +44,20 @@ export default function dailyInfo() {
         .then(response => response.json())
         .then(data => {
             //first print out the data recieved back, handling is done later
-            const toSend = data["result"]["dailyInfo"];
+            const toSendOne = data["result"]["dailyInfo"]["one"];
+            const toSendTwo = data["result"]["dailyInfo"]["two"]
+            const toSendThree = data["result"]["dailyInfo"]["three"]
+            //TEST
+            console.log("These are the values which are sent in order: ", toSendOne, " ", toSendTwo, " ", toSendThree);
             router.push({
                 pathname: '/gamePlay',
-                params: { dailyInfo: toSend, username: username }
+                //change dailyInfo back this is just a test
+                params: { 
+                    dailyInfoOne: JSON.stringify(toSendOne), 
+                    dailyInfoTwo: JSON.stringify(toSendTwo), 
+                    dailyInfoThree: JSON.stringify(toSendThree), 
+                    username: username 
+                }
             })
         })
         .catch(error => {
