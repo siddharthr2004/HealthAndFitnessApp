@@ -45,10 +45,10 @@ export default function dailyInfo() {
         .then(data => {
             //first print out the data recieved back, handling is done later
             const toSendOne = data["result"]["dailyInfo"]["one"];
-            const toSendTwo = data["result"]["dailyInfo"]["two"]
-            const toSendThree = data["result"]["dailyInfo"]["three"]
-            //TEST
-            console.log("These are the values which are sent in order: ", toSendOne, " ", toSendTwo, " ", toSendThree);
+            const toSendTwo = data["result"]["dailyInfo"]["two"];
+            const toSendThree = data["result"]["dailyInfo"]["three"];
+            //hard-coded out so that you don't increase costs of token requests
+            const toSendFour = data["result"]["weeklyInfo"];
             router.push({
                 pathname: '/gamePlay',
                 //change dailyInfo back this is just a test
@@ -56,6 +56,7 @@ export default function dailyInfo() {
                     dailyInfoOne: JSON.stringify(toSendOne), 
                     dailyInfoTwo: JSON.stringify(toSendTwo), 
                     dailyInfoThree: JSON.stringify(toSendThree), 
+                    dailyInfoFour: JSON.stringify(toSendFour),
                     username: username 
                 }
             })

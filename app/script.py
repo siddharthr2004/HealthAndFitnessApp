@@ -77,7 +77,6 @@ def handle_Login():
     else:
         return jsonify({"result": 1})
 
-#comment back in 
 @app.route('/firstInfo', methods=['POST'])
 #Added in argument to check capability of handling
 def handle_post():
@@ -103,9 +102,10 @@ def handle_post():
     else:
         return jsonify({"result": 0})
 
-#comment back in 
 @app.route('/dailyInfo', methods=['POST'])
 def handleDailyPost():
+    #This is just for testing:
+    print("ENTERING THIS SECTION")
     conn = sqlite3.connect('userData.db')
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -188,12 +188,29 @@ def handleDailyPost():
         toNormalDifferences[(list(toNormalDifferences.keys())[0])] /= 4
         return toNormalDifferences
     
-    #populate daily dicts   
+    #retrieve information pertaining to last four days
+    cursor.execute('SELECT * FROM dailyInfo WHERE username = ? ORDER BY id DESC LIMIT 4', [username])
+    actualRows = cursor.fetchall()
+    #THIS IS JUST FOR TESTING
+    print("THESE ARE THE ROWS RECEIVED", actualRows)
+    #retrieve expected informaton
     cursor.execute('SELECT * FROM userInfo WHERE username = ?', [username])
-    row = cursor.fetchone()
-    if (row):
-        actual = [dailyData["calsIntaked"], dailyData["socialMediaHours"],  dailyData["waterDrank"], dailyData["hrsProductive"]]
-        expected = [row["calsIntaked"], row["socialMediaHours"], row["waterDrank"], row["hrsProductive"]]
+    expectedRow = cursor.fetchone()
+    if (actualRows and expectedRow and len(actualRows) >= 4):
+        calsIntaked, socialMediaHours, waterDrank, hrsProductive = 0,0,0,0
+        for row in actualRows:
+            #TESTING
+            print("This is the cals intaked: ", row["calsIntaked"])
+            print("This is the social media hours: ", row["socialMediaHours"])
+            calsIntaked += row["calsIntaked"]
+            socialMediaHours += row["socialMediaHours"]
+            waterDrank += row["waterDrank"]
+            hrsProductive += row["hrsProductive"]
+        actual = [(calsIntaked)/4, (socialMediaHours)/4, (waterDrank)/4, (hrsProductive)/4]
+        expected = [expectedRow["calsIntaked"], expectedRow["socialMediaHours"], expectedRow["waterDrank"], expectedRow["hrsProductive"]]
+        #TESTING
+        print("These are the actual values for the past 4 days: ", actual)
+        print("These are the overall expected values: ", expected)
         dailyToNormal = handleDifferences(actual, expected, dailyToNormalDifferences)
         #populate throttle
         for key in dailyToNormalDifferences.keys():
@@ -203,56 +220,56 @@ def handleDailyPost():
                 dailyToNormalThrottle["two"].append(key)
             elif dailyToNormal[key] >= 50:
                 dailyToNormalThrottle["three"].append(key)
-        outputs["dailyInfo"] = dailyToNormalThrottle
-    #Extract information about weekly information
-    cursor.execute('SELECT * FROM dailyInfo WHERE username = ? ORDER BY id DESC LIMIT 1', [username])
-    row = cursor.fetchone()
-    if (row):
-        #Only enter in the weekly informtion if there are 7 instances (where it is order by descending value)
-        if (row["id"] >= 0) and (row["id"]%7 == 0):
-            cursor.execute('SELECT * FROM dailyInfo WHERE id > ? AND id < ? AND username = ?', 
-                            [row["id"]-7, row["id"], username])
-            rows = cursor.fetchall()
-            for row in rows:
-                weeklyData["calsIntaked"] += row["calsIntaked"]
-                weeklyData["socialMediaHours"] += row["socialMediaHours"]
-                weeklyData["waterDrank"] += row["waterDrank"]
-                weeklyData["hrsProductive"] += row["hrsProductive"]
-            for key in weeklyData:
-                weeklyData[key] /= 7
-            #Iterate through keys in weeklyAvergae, find username, find diff b/w expected and 
-            #weekly avg, place into throttle sections
-            cursor.execute('SELECT * FROM userInfo WHERE username = ?', [username])
-            row = cursor.fetchone()
-            expected = [row["calsIntaked"], row["socialMediaHours"], row["waterDrank"], row["hrsProductive"]]
-            actual = [weeklyData["calsIntaked"], weeklyData["socialMediaHours"], weeklyData["waterDrank"], 
-                      weeklyData["hrsProductive"]]
-            weeklyDifferencesAnswer = handleDifferences(actual, expected, weeklyToNormalDiferences)
-            prompt = (
-                f"Weekly summary of user '{username}' :\n"
-                f'''Deviation between expected calories intaked and actual calories intaked is {weeklyDifferencesAnswer["calsIntakedDeviation"]}
-                    Where the expects is above the actual'''
-                f'''Deviation between expected Social Media Hours and actual social media hours is {weeklyDifferencesAnswer["socialMediaDeviation"]}
-                    Where the actual is above the expected'''
-                f'''Deviation between expected water consumed and actual water consumed is {weeklyDifferencesAnswer["watersConsumedDeviation"]}
-                    Where the actual is below the expected'''
-                f'''Deviation between expected hours productive and actual hours productive is {weeklyDifferencesAnswer["hoursProductiveDeviation"]}
-                    Where the actual is below the expected'''
-                f'''Deviation between expected health/productivity activites and actual health/productivity activites is {weeklyDifferencesAnswer["TotalNormalizedDiff"]}
-                    Where the actual is above OR below the expected'''
-                "Based on this information, please provide a detailed and comprehensive action plan, which motivates the user, showing them common " \
-                "reasons for these flaws (especially comparing values which are very negative, and which may be contribting to the overall negative)" \
-                "health/productivity scores"
-            )
-
-            response = client.responses.create(
-                model="gpt-4o-mini",
-                input=prompt
-            )
-            outputs["weeklyInfo"] += response.output_text
-    print(outputs["dailyInfo"])
+        outputs["dailyInfo"] = dailyToNormalThrottle        
+    
+    #WEEKLY INFO:
+    cursor.execute('SELECT * FROM dailyInfo WHERE username = ? ORDER BY id DESC LIMIT 7', [username])
+    actualRows = cursor.fetchall()
+    #Only enter in the weekly informtion if there are 7 instances (where it is order by descending value)
+    #Comment back in, but for testing change it to see for each run
+    #if (actualRows and len(actualRows) >= 7 and ((actualRows[0]["id"]-actualRows[6]["id"]) % 7 != 0)):
+    if (actualRows):
+        calsIntaked, socialMediaHours, waterDrank, hrsProductive = 0, 0, 0, 0
+        for row in actualRows:   
+            calsIntaked += row["calsIntaked"]
+            socialMediaHours += row["socialMediaHours"]
+            waterDrank += row["waterDrank"]
+            hrsProductive += row["hrsProductive"]
+        #Iterate through keys in weeklyAvergae, find username, find diff b/w expected and avg, populate throttle
+        cursor.execute('SELECT * FROM userInfo WHERE username = ?', [username])
+        row = cursor.fetchone()
+        expected = [row["calsIntaked"], row["socialMediaHours"], row["waterDrank"], row["hrsProductive"]]
+        actual = [calsIntaked/7, socialMediaHours/7, waterDrank/7, hrsProductive/7]
+        weeklyDifferencesAnswer = handleDifferences(actual, expected, weeklyToNormalDiferences)
+        #COMMENTED OUT TO PREVENT MASSIVE COSTS WHEN REQUESTING TOKENS
+        # prompt = (
+        #     f"Weekly summary of user '{username}' :\n"
+        #     f'''Deviation between expected calories intaked and actual calories intaked is {weeklyDifferencesAnswer["calsIntakedDeviation"]}
+        #         Where the expects is above the actual'''
+        #     f'''Deviation between expected Social Media Hours and actual social media hours is {weeklyDifferencesAnswer["socialMediaDeviation"]}
+        #         Where the actual is above the expected'''
+        #     f'''Deviation between expected water consumed and actual water consumed is {weeklyDifferencesAnswer["watersConsumedDeviation"]}
+        #         Where the actual is below the expected'''
+        #     f'''Deviation between expected hours productive and actual hours productive is {weeklyDifferencesAnswer["hoursProductiveDeviation"]}
+        #         Where the actual is below the expected'''
+        #     f'''Deviation between expected health/productivity activites and actual health/productivity activites is {weeklyDifferencesAnswer["TotalNormalizedDiff"]}
+        #         Where the actual is above OR below the expected'''
+        #     "Based on this information, please provide a detailed and comprehensive action plan, which motivates the user, showing them common " \
+        #     "reasons for these flaws (especially comparing values which are very negative, and which may be contribting to the overall negative)" \
+        #     "health/productivity scores"
+        # )
+        # response = client.responses.create(
+        #     model="gpt-4o-mini",
+        #     input=prompt
+        # )
+        #outputs["weeklyInfo"] += response.output_text
+        outputs["weeklyInfo"] += "This here is the output. Format as you want it formatted. Add if you want more values inputted."
     return jsonify({"result": outputs})
 
+
 app.run(host='0.0.0.0', port=5001)
+
+#COMMENTED OUT FOR TESTING
+#app.run(host='0.0.0.0', port=5001)
 
 
