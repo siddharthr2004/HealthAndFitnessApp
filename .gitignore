@@ -47,3 +47,4 @@ keys.env
 #database
 userData.db 
 userData.sb
+app/userData.db
