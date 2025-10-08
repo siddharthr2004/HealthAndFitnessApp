@@ -5,11 +5,19 @@ A cross-platform app built with **React Native** to turn daily health and produc
 
 ---
 
-## ✨ Features
+## Features
 
 - Built using React Native, compatible with both iOS, transforms daily stats into incremental rewards or penalties in gameplay
 - Weekly AI-generated improvement strategies tailored to user patterns.
 - Weekly performance compared against expected growth, all user data and advice given based on areas where the user is lacking
+
+---
+
+## Example image
+
+<img width="335" height="538" alt="image" src="https://github.com/user-attachments/assets/fb13382d-f668-4217-a2d2-a7c446a58ed0" />
+
+(an example of a depeleted house because the user has not met his hydration goals)
 
 ---
 
