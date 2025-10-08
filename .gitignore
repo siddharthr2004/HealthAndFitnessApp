@@ -43,3 +43,7 @@ ios/
 
 #key storage
 keys.env
+
+#database
+userData.db 
+userData.sb
