@@ -11,6 +11,8 @@ export default function renderSkiaGraphics() {
   const screenWidth = width;
   const screenHeight = height;
   let house = useImage(require('./images/houseLevelOne.png'));
+  let grass = useImage(require('./images/grassLevelOne.png'))
+  let sky = useImage(require('./images/SkyLevelOne.png'))
   //retrieve username, and daily info values
   const { username, dailyInfoOne, dailyInfoTwo, dailyInfoThree, dailyInfoFour} = useLocalSearchParams();
   //parses out the values, converts the string json into js objects
@@ -31,6 +33,12 @@ export default function renderSkiaGraphics() {
     console.log("came here");
     if (parsedToSendOne[i] == "hoursProductiveDeviation") {
       house = useImage(require('./images/houseLevelTwo.png'));
+    }
+    if (parsedToSendOne[i] == "watersConsumedDeviation") {
+      //logic later
+    }
+    if (parsedToSendOne[i] == "socialMediaHours") {
+      //logic later
     }
   }
  
@@ -66,11 +74,25 @@ export default function renderSkiaGraphics() {
           </View>
           }
         <Canvas style={{width: screenWidth, height: screenHeight}}>
+          {sky && 
+            <Mask mask={
+              <Path path={`M 0 0 L ${screenWidth} 0 L ${screenWidth} ${screenHeight} L 0 ${screenHeight} Z`} />
+            }>
+              <Image image={sky} x={-140} width={screenWidth + 200} height={screenHeight + 200}></Image>
+            </Mask> 
+          }
+          {grass && 
+            <Mask mask={
+              <Path path={`M 0 0 L ${screenWidth} 0 L ${screenWidth} ${screenHeight} L 0 ${screenHeight} Z`} />
+            }>
+              <Image image={grass} width={screenWidth} height={screenHeight}></Image>
+            </Mask>
+          }
           {house && 
             <Mask mask={
-              <Path path={`M 0 0 L ${screenWidth} 0 L ${screenHeight} ${screenWidth} L 0 ${screenHeight}`}/>
+              <Path path={`M 0 0 L ${screenWidth} 0 L ${screenWidth} ${screenHeight} L 0 ${screenHeight} Z`} />
             }>
-              <Image image={house} width={screenWidth} height={screenHeight}></Image>
+              <Image image={house} x = {-20} width={screenWidth} height={screenHeight}></Image>
             </Mask> 
           }
         </Canvas>
