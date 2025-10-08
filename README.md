@@ -15,7 +15,8 @@ A cross-platform app built with **React Native** to turn daily health and produc
 
 ## Example image
 
-<img width="335" height="538" alt="image" src="https://github.com/user-attachments/assets/fb13382d-f668-4217-a2d2-a7c446a58ed0" />
+<img width="321" height="520" alt="image" src="https://github.com/user-attachments/assets/9d87c826-25b4-4cab-8e42-cdefc659fd8f" />
+
 
 (an example of a depeleted house because the user has not met his hydration goals)
 
