@@ -241,35 +241,31 @@ def handleDailyPost():
         expected = [row["calsIntaked"], row["socialMediaHours"], row["waterDrank"], row["hrsProductive"]]
         actual = [calsIntaked/7, socialMediaHours/7, waterDrank/7, hrsProductive/7]
         weeklyDifferencesAnswer = handleDifferences(actual, expected, weeklyToNormalDiferences)
-        #COMMENTED OUT TO PREVENT MASSIVE COSTS WHEN REQUESTING TOKENS
-        # prompt = (
-        #     f"Weekly summary of user '{username}' :\n"
-        #     f'''Deviation between expected calories intaked and actual calories intaked is {weeklyDifferencesAnswer["calsIntakedDeviation"]}
-        #         Where the expects is above the actual'''
-        #     f'''Deviation between expected Social Media Hours and actual social media hours is {weeklyDifferencesAnswer["socialMediaDeviation"]}
-        #         Where the actual is above the expected'''
-        #     f'''Deviation between expected water consumed and actual water consumed is {weeklyDifferencesAnswer["watersConsumedDeviation"]}
-        #         Where the actual is below the expected'''
-        #     f'''Deviation between expected hours productive and actual hours productive is {weeklyDifferencesAnswer["hoursProductiveDeviation"]}
-        #         Where the actual is below the expected'''
-        #     f'''Deviation between expected health/productivity activites and actual health/productivity activites is {weeklyDifferencesAnswer["TotalNormalizedDiff"]}
-        #         Where the actual is above OR below the expected'''
-        #     "Based on this information, please provide a detailed and comprehensive action plan, which motivates the user, showing them common " \
-        #     "reasons for these flaws (especially comparing values which are very negative, and which may be contribting to the overall negative)" \
-        #     "health/productivity scores"
-        # )
-        # response = client.responses.create(
-        #     model="gpt-4o-mini",
-        #     input=prompt
-        # )
-        #outputs["weeklyInfo"] += response.output_text
-        outputs["weeklyInfo"] += "This here is the output. Format as you want it formatted. Add if you want more values inputted."
+        prompt = (
+            f"Weekly summary of user '{username}' :\n"
+            f'''Deviation between expected calories intaked and actual calories intaked is {weeklyDifferencesAnswer["calsIntakedDeviation"]}
+                Where the expects is above the actual'''
+            f'''Deviation between expected Social Media Hours and actual social media hours is {weeklyDifferencesAnswer["socialMediaDeviation"]}
+                Where the actual is above the expected'''
+            f'''Deviation between expected water consumed and actual water consumed is {weeklyDifferencesAnswer["watersConsumedDeviation"]}
+                Where the actual is below the expected'''
+            f'''Deviation between expected hours productive and actual hours productive is {weeklyDifferencesAnswer["hoursProductiveDeviation"]}
+                Where the actual is below the expected'''
+            f'''Deviation between expected health/productivity activites and actual health/productivity activites is {weeklyDifferencesAnswer["TotalNormalizedDiff"]}
+                Where the actual is above OR below the expected'''
+            "Based on this information, please provide a detailed and comprehensive action plan, which motivates the user, showing them common " \
+            "reasons for these flaws (especially comparing values which are very negative, and which may be contribting to the overall negative)" \
+            "health/productivity scores"
+        )
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=prompt
+        )
+        outputs["weeklyInfo"] += response.output_text
     return jsonify({"result": outputs})
 
 
 app.run(host='0.0.0.0', port=5001)
 
-#COMMENTED OUT FOR TESTING
-#app.run(host='0.0.0.0', port=5001)
 
 
